@@ -38,7 +38,6 @@ include_directories(include)
 
 set(INTRINSICS_TESTER_SRCS
 x86Intrin.cpp
-compareFunctions.cpp
 )
 
 add_library(tester STATIC ${INTRINSICS_TESTER_SRCS})
