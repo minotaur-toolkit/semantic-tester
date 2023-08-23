@@ -4,15 +4,17 @@
 
 #include "JIT.h"
 #include "commandLineUtil.h"
-#include "compareFunctions.cpp"
 #include "irGenerator.h"
 #include "irWrapper.h"
+#include "llvm_util/compare.h"
 #include "progressBar.h"
 #include "randomizer.h"
+#include "smt/smt.h"
 #include "testLoop.h"
 #include "vectorWrapper.h"
 #include "vectorutil.h"
 #include "x86Intrin.h"
+#include "llvm/Analysis/TargetLibraryInfo.h"
 #include <chrono>
 
 using namespace std;
@@ -35,10 +37,6 @@ int main(int argc, char **argv) {
   // Initialize Alive2
   Triple targetTriple(TheModule.get()->getTargetTriple());
   TargetLibraryInfoWrapperPass TLI(targetTriple);
-
-  // Set up output stream for Alive2 info, then set up smt
-  out = &cout;
-  smt_init.emplace();
 
   // Loop that evaluates every intrinsic
   constexpr unsigned loopCount = IR::X86IntrinBinOp::numOfX86Intrinsics;
@@ -122,11 +120,14 @@ int main(int argc, char **argv) {
             generateCallFunction<op0Bitwidth, op1Bitwidth>(
                 vals, vals2, intrinsicFunction, "src");
 
-        const unsigned currentNumCorrect = num_correct;
-        compareFunctions(*srcFunc, *tgtFunc, TLI);
+        smt::smt_initializer smt_init;
+        llvm_util::Verifier verifier(TLI, smt_init, cout);
+        verifier.quiet = true;
+
+        bool result = verifier.compareFunctions(*srcFunc, *tgtFunc);
 
         // Print LLVM IR if failed test
-        if (currentNumCorrect + 1 != num_correct) {
+        if (!result) {
           srcFunc->print(outs());
           tgtFunc->print(outs());
         }
@@ -175,11 +176,7 @@ int main(int argc, char **argv) {
 
   cout << "\nRan " << numberOfTestsPerformed << " tests on "
        << numberOfIntrinsicsTested << " intrinsics."
-       << "\nNumber of minutes taken: " << minutesTaken.count()
-       << "\nNum correct: " << num_correct
-       << "\nNum unsound: " << num_unsound
-       << "\nNum failed: " << num_failed << "\nNum errors: " << num_errors
-       << "\n";
+       << "\nNumber of minutes taken: " << minutesTaken.count()<< "\n";
 
   return 0;
 }

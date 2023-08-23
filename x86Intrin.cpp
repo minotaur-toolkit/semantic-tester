@@ -7,6 +7,6 @@
 std::array<llvm::Intrinsic::ID, IR::X86IntrinBinOp::numOfX86Intrinsics>
     TesterX86IntrinBinOp::intrin_id = {
 #define PROCESS(NAME,A,B,C,D,E,F) llvm::Intrinsic::NAME,
-#include "ir/intrinsics.h"
+#include "ir/intrinsics_binop.h"
 #undef PROCESS
 };
