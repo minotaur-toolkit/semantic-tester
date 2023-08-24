@@ -34,23 +34,16 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 find_package(Alive2)
 include_directories(${ALIVE2_SOURCE_DIR})
 
-include_directories(include)
+find_package(Z3 4.8.5 REQUIRED)
 
-set(INTRINSICS_TESTER_SRCS
-x86Intrin.cpp
-)
-
-add_library(tester STATIC ${INTRINSICS_TESTER_SRCS})
-set(ALIVE_LIBS_LLVM tester ${ALIVE_LIBS_LLVM})
+llvm_map_components_to_libnames(LLVM_LIBS
+  analysis core irreader passes scalaropts support transformutils targetparser
+  ExecutionEngine orcjit native target jitlink)
 
 add_llvm_executable(intrinsics-tester
   "intrinsics-tester.cpp"
-  ${INTRINSICS_TESTER_SRCS}
+  "x86Intrin.cpp"
 )
 
-
-llvm_map_components_to_libnames(LLVM_LIBS
-  analysis core irreader passes scalaropts support transformutils targetparser)
-
-llvm_map_components_to_libnames(tester_libs ExecutionEngine orcjit native target jitlink)
-target_link_libraries(intrinsics-tester PRIVATE ${ALIVE_LIBS_LLVM} ${llvm_libs} ${tester_libs})
+target_link_libraries(intrinsics-tester PRIVATE ${ALIVE_LIBS} ${Z3_LIBRARIES} ${LLVM_LIBS}
+  $<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_LESS:$<CXX_COMPILER_VERSION>,9.0>>:stdc++fs>)

@@ -86,13 +86,12 @@ int main(int argc, char **argv) {
           op1BitSize != 512,
           conditional_t<
               op1BitSize == 256, __m256i,
-              conditional_t<op1BitSize == 32, int32_t, __m128i>>,
-          __m512i>;
+              conditional_t<op1BitSize == 32, int32_t, __m128i>>, __m512i>;
 
       typedef returnType (*opFunctionType)(op0Type, op1Type);
 
       auto *funcPointer = reinterpret_cast<opFunctionType>(
-          JITCompiler->getFuncAddress("func" + to_string(index.value)));
+          JITCompiler->getFuncAddress("func" + to_string(index.value)).getValue());
 
       // Declare the intrinsic to be used
       Function *intrinsicFunction = Intrinsic::getDeclaration(

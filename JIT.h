@@ -98,11 +98,11 @@ public:
     return CompileLayer.add(RT, std::move(TSM));
   }
 
-  llvm::Expected<llvm::JITEvaluatedSymbol> lookup(llvm::StringRef Name) {
+  llvm::Expected<llvm::orc::ExecutorSymbolDef> lookup(llvm::StringRef Name) {
     return ES->lookup({&MainJD}, Mangle(Name.str()));
   }
 
-  llvm::JITTargetAddress getFuncAddress(std::string str) {
+  llvm::orc::ExecutorAddr getFuncAddress(std::string str) {
     auto funcLookup = lookup(str);
 
     if (auto E = funcLookup.takeError()) {
